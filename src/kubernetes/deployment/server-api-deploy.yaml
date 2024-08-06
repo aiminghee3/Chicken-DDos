@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: coupon-deployment
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: coupon
+  template:
+    metadata:
+      labels:
+        app: coupon
+    spec:
+      containers:
+        - name: couponContainer
+          image: aiminghee3/coupon-deployment:latest
+          imagePullPolicy: Always
+          env:
+            - name: HOST
+              value: 'localhost'
+            - name: PORT
+              value: '3306'
+            - name: USERNAME
+              value: 'test_server'
+            - name: PASSWORD
+              value: '00000000'
+            - name: DATABASE
+              value: 'couponDB'
+            - name: REDIS_PORT
+              value: '6379'

@@ -9,7 +9,7 @@ export class CouponController {
 
   @Post('issue')
   async issueCoupon(@Body() body : IssueCouponDto) : Promise<CouponWallet>{
-    return await this.couponService.issueCoupon(body);
+    return await this.couponService.issueCouponRedisLock(body);
   }
 
   @Post()
