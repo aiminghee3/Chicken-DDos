@@ -18,11 +18,10 @@ export class CouponService {
   ){}
 
   async issueCouponRedisLock(body: IssueCouponDto) : Promise<CouponWallet>{
-    let lock: Lock;
     let issuedCoupon : CouponWallet;
-      try{
-        lock = await this.redisService.acquireLock(`coupon:${body.code}`);
+    let lock: Lock = await this.redisService.acquireLock(`coupon:${body.code}`);
 
+      try{
         await this.couponRepository.manager.transaction(async (transaction: EntityManager) =>{
 
           const coupon: Coupon = await transaction.findOne(
@@ -42,9 +41,11 @@ export class CouponService {
         return issuedCoupon;
       }
       catch(error){
-        throw error;
+        throw new Error(error);
       }finally{
-        await lock.release();
+        if(lock){
+          await lock.release();
+        }
       }
   }
 
@@ -75,6 +76,9 @@ export class CouponService {
     }
   }
 
+  async getCouponList() : Promise<Coupon[]>{
+    return await this.couponRepository.find();
+  }
 
 
   async checkAlreadyIssuedCoupon(userId : string, coupon : Coupon, transaction : EntityManager){

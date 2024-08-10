@@ -2,30 +2,40 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: coupon-deployment
+  namespace: coupon
+  labels:
+    app: server-label
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: coupon
+      app: server-label
   template:
     metadata:
       labels:
-        app: coupon
+        app: server-label
     spec:
       containers:
-        - name: couponContainer
+        - name: coupon-container
           image: aiminghee3/coupon-deployment:latest
+          ports:
+            - containerPort: 8000
           imagePullPolicy: Always
           env:
             - name: HOST
-              value: 'localhost'
+              value: 'mysql-service'
             - name: PORT
               value: '3306'
             - name: USERNAME
-              value: 'test_server'
+              value: 'root'
             - name: PASSWORD
-              value: '00000000'
+              valueFrom:
+                secretKeyRef:
+                  name: mysql-secret
+                  key: PASSWORD
             - name: DATABASE
               value: 'couponDB'
+            - name: REDIS_HOST
+              value: 'redis-service'
             - name: REDIS_PORT
               value: '6379'

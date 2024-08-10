@@ -9,7 +9,7 @@ dotenv.config();
   imports: [
     NestjsRedisModule.forRoot({
       config: {
-        host: process.env.HOST,
+        host: process.env.REDIS_HOST,
         port: parseInt(process.env.REDIS_PORT, 10),
       },
     }),

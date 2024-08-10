@@ -1,19 +1,19 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRedis } from '@liaoliaots/nestjs-redis';
 import Redis from 'ioredis';
-import Redlock from 'redlock';
+import Redlock, {Lock} from 'redlock';
 
 @Injectable()
 export class RedisService{
   private readonly redlock: Redlock;
-  private readonly lockDuration = 5000;
+  private readonly lockDuration = 2000;
 
   constructor(@InjectRedis() private redis: Redis) {
     this.redlock = new Redlock([redis]);
   }
 
-  async acquireLock(key: string) {
-    return this.redlock.acquire([`lock:${key}`], this.lockDuration);
+  async acquireLock(key: string): Promise<Lock> {
+    return await this.redlock.acquire([`lock:${key}`], this.lockDuration);
   }
 
   async setNx(key: string, value: string){
