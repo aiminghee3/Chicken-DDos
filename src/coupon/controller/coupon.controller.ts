@@ -23,9 +23,4 @@ export class CouponController {
   async getLeftCouponList() : Promise<Coupon[]>{
     return await this.couponService.getCouponList();
   }
-
-  @Get('test')
-  async test(){
-    console.log('test');
-  }
 }

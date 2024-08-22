@@ -41,9 +41,6 @@ export class CouponService {
         return issuedCoupon;
       }
       catch(error){
-        if(error.name === 'ExecutionError'){
-          throw new Error('락을 획득하지 못하였습니다.');
-        }
         throw new Error(error);
       }finally{
         if(lock){
