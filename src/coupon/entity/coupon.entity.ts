@@ -33,4 +33,8 @@ export class Coupon {
       this.totalAmount = total_amount;
       this.leftAmount = left_amount;
   }
+
+  decreaseLeftAmount() : void{
+    if (this.leftAmount > 0) this.leftAmount -= 1;
+  }
 }

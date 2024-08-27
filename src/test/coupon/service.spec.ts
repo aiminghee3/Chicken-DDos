@@ -6,7 +6,6 @@ import { Coupon } from '../../coupon/entity/coupon.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { type MockProxy, mock } from "jest-mock-extended";
 import { CouponWallet } from '../../coupon/entity/coupon-wallet.entity';
-import { Repository } from 'typeorm';
 
 describe('CouponService', () =>{
 
@@ -44,8 +43,7 @@ describe('CouponService', () =>{
         },
         {
           provide: getRepositoryToken(CouponWallet),
-          useValue:{
-          }
+          useValue:{}
         },
         {
           provide: RedisService,
@@ -60,7 +58,6 @@ describe('CouponService', () =>{
 
   it('성공 - 의존성 주입 로직 모킹', async() =>{
     expect(couponService).toBeDefined();
-    //expect(couponWalletRepository).toBeDefined();
     expect(redisService).toBeDefined();
     expect(mockLock).toBeDefined();
   })
@@ -96,4 +93,46 @@ describe('CouponService', () =>{
     expect(mockLock.release).toHaveBeenCalled();
   })
 
+  it('실패 - 이미 쿠폰을 받급받은 유저인 경우', async() =>{
+    //given
+    redisService.acquireLock.mockResolvedValueOnce(mockLock);
+
+    const issuedCouponWallet = new CouponWallet("1234", mockCoupon);
+
+    const transactionManager = {
+      findOne :
+        jest
+          .fn()
+          .mockResolvedValueOnce(mockCoupon)
+          .mockResolvedValueOnce(issuedCouponWallet.coupon),
+    }
+    mockRepository.manager.transaction.mockImplementation(async (callback)=>{
+      await callback(transactionManager);
+    })
+
+    //when, then
+    await expect(couponService.issueCouponRedisLock(applyUser)).rejects.toThrowError('이미 쿠폰을 발급받은 유저입니다.');
+    expect(mockLock.release).toHaveBeenCalled();
+  })
+
+
+  it('실패 - 쿠폰이 없는 경우', async() =>{
+    //given
+    redisService.acquireLock.mockResolvedValueOnce(mockLock);
+    mockCoupon.leftAmount = 0;
+
+    const transactionManager = {
+      findOne : jest.fn().mockResolvedValueOnce(mockCoupon),
+    }
+
+    mockRepository.manager.transaction.mockImplementation(async (callback) =>{
+      await callback(transactionManager);
+    })
+
+    jest.spyOn(couponService, 'checkAlreadyIssuedCoupon').mockResolvedValueOnce(undefined);
+
+    //when, then
+    await expect(couponService.issueCouponRedisLock(applyUser)).rejects.toThrowError('쿠폰 수량이 모두 소진되었습니다.');
+    expect(mockLock.release).toHaveBeenCalled();
+  })
 })

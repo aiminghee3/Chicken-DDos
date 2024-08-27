@@ -32,7 +32,6 @@ export class CouponService {
             throw new NotFoundException("존재하지 않는 쿠폰입니다.")
           }
           await this.checkAlreadyIssuedCoupon(body.userId, coupon, transaction);
-
           const updatedCoupon = await this.updateCouponAmount(coupon, transaction);
           const wallet = new CouponWallet(body.userId, updatedCoupon);
 
@@ -95,7 +94,7 @@ export class CouponService {
     if(coupon.leftAmount <= 0){
       throw new BadRequestException('쿠폰 수량이 모두 소진되었습니다.')
     }
-    coupon.leftAmount--;
+    coupon.decreaseLeftAmount();
     const updatedCoupon : Coupon = await transaction.save(Coupon, coupon);
     return updatedCoupon;
   }
