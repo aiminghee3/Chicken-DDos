@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Coupon } from "../entity/coupon.entity";
 import { EntityManager, Repository } from "typeorm";
 import { InjectRepository } from "@nestjs/typeorm";
@@ -6,6 +6,7 @@ import { CouponWallet } from "../entity/coupon-wallet.entity";
 import { IssueCouponDto } from "../dto/coupon.dto";
 import { RedisService } from '../../redis/service/redis.service';
 import { Lock } from 'redlock';
+import { AlreadyIssuedException, BadRequestException, EntityNotFoundException } from '../../common';
 
 @Injectable()
 export class CouponService {
@@ -29,7 +30,7 @@ export class CouponService {
           )
 
           if(!coupon){
-            throw new NotFoundException("존재하지 않는 쿠폰입니다.")
+            throw EntityNotFoundException("존재하지 않는 쿠폰입니다.")
           }
           await this.checkAlreadyIssuedCoupon(body.userId, coupon, transaction);
           const updatedCoupon = await this.updateCouponAmount(coupon, transaction);
@@ -40,7 +41,7 @@ export class CouponService {
         return issuedCoupon;
       }
       catch(error){
-        throw new Error(error);
+        throw error;
       }finally{
         if(lock){
           await lock.release();
@@ -59,7 +60,7 @@ export class CouponService {
         )
 
         if(!coupon){
-          throw new NotFoundException("존재하지 않는 쿠폰입니다.")
+           throw EntityNotFoundException("존재하지 않는 쿠폰입니다.")
         }
         await this.checkAlreadyIssuedCoupon(body.userId, coupon, transaction);
 
@@ -86,13 +87,13 @@ export class CouponService {
       return;
     }
     else if(JSON.stringify(checkUserHaveCoupon.coupon) !== JSON.stringify(coupon)){
-      throw new BadRequestException('이미 쿠폰을 발급받은 유저입니다.');
+      throw AlreadyIssuedException('이미 쿠폰을 발급받은 유저입니다.');
     }
   }
 
   async updateCouponAmount(coupon : Coupon, transaction : EntityManager) : Promise<Coupon>{
     if(coupon.leftAmount <= 0){
-      throw new BadRequestException('쿠폰 수량이 모두 소진되었습니다.')
+      throw BadRequestException('쿠폰 수량이 모두 소진되었습니다.')
     }
     coupon.decreaseLeftAmount();
     const updatedCoupon : Coupon = await transaction.save(Coupon, coupon);
