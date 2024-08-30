@@ -6,7 +6,7 @@ import { CouponWallet } from "../entity/coupon-wallet.entity";
 import { IssueCouponDto } from "../dto/coupon.dto";
 import { RedisService } from '../../redis/service/redis.service';
 import { Lock } from 'redlock';
-import { AlreadyIssuedException, BadRequestException, EntityNotFoundException } from '../../common';
+import { AlreadyIssuedException, BadRequestException, EntityNotFoundException, FailedAcquireLock } from '../../common';
 
 @Injectable()
 export class CouponService {
@@ -20,9 +20,14 @@ export class CouponService {
 
   async issueCouponRedisLock(body: IssueCouponDto) : Promise<CouponWallet>{
     let issuedCoupon : CouponWallet;
-    let lock: Lock = await this.redisService.acquireLock(`coupon:${body.code}`);
+    let lock: Lock;
 
       try{
+        //lock = await this.redisService.acquireLock(`coupon:${body.code}`);
+        const result = await this.redisService.acquireLock(body.code, body.userId);
+        if(!result){
+          throw FailedAcquireLock('락을 획득하지 못했습니다.');
+        }
         await this.couponRepository.manager.transaction(async (transaction: EntityManager) =>{
 
           const coupon: Coupon = await transaction.findOne(
@@ -41,11 +46,17 @@ export class CouponService {
         return issuedCoupon;
       }
       catch(error){
+        if(error.name === 'ExecutionError'){
+          throw FailedAcquireLock('락을 획득하지 못했습니다.');
+        }
         throw error;
       }finally{
+        /**
         if(lock){
           await lock.release();
         }
+          */
+        await this.redisService.releaseLock(body.code, body.userId);
       }
   }
 
