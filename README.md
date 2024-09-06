@@ -1,74 +1,213 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# 🐔 Chicken DDoS Project
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Chicken DDoS 프로젝트는 대규모 트래픽을 처리하면서 선착순으로 치킨 쿠폰을 발급하는 이벤트를 목표로 한 프로젝트입니다. 
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+이 프로젝트는 분산 시스템 아키텍처를 적용한 첫 번째 프로젝트로, 효율적인 트래픽 관리와 동시성 제어를 통해 안정적인 쿠폰 발급을 구현했습니다.
 
-## Description
+목차
+1. 프로젝트 개요
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+    1-1. 프로젝트 소개
 
-## Installation
+    1-2. 문제 해결 전략
 
-```bash
-$ npm install
-```
+    1-3. 기술 스택
 
-## Running the app
+    1-4. 데이터베이스 ERD
 
-```bash
-# development
-$ npm run start
 
-# watch mode
-$ npm run start:dev
+2. 개발 결과물
 
-# production mode
-$ npm run start:prod
-```
+    2-1. 데이터베이스 ERD
+    
+    2-2. 최종 아키텍처
 
-## Test
 
-```bash
-# unit tests
-$ npm run test
+3. 성능 개선 과정
 
-# e2e tests
-$ npm run test:e2e
+    3-1. 비관적 락(사용) vs 낙관적 락
 
-# test coverage
-$ npm run test:cov
-```
+    3-2. Redis를 이용한 분산락
 
-## Support
+    3-3. Redis 성능 향상
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+    3-4. k8s를 통한 로드밸런싱
 
-## Stay in touch
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+4. 기술적 성과 요약
 
-## License
+   4-1. 성능 개선 표
+   
+   4-2. 그 외
 
-Nest is [MIT licensed](LICENSE).
-# Chicken-DDos
+
+5. 개선 목표
+
+
+## 1. 프로젝트 개요
+
+### 1-1. 프로젝트 소개
+
+선착순으로 치킨 쿠폰을 받을 수 있는 치킨 디도스 프로젝트입니다. 첫 번째 분산 시스템 프로젝트입니다.
+
+• 프로젝트 요구사항
+> 쿠폰 발급 이벤트를 진행합니다. <br/>
+> 유저는 다음과 같은 종류의 쿠폰 중 하나를 선택하여 발급 받을 수 있습니다.
+> 
+> •	쿠폰 A: 치킨 무료쿠폰, 선착순 300장 (할인율 100%) <br/>
+> •	쿠폰 B: 5천원 할인 쿠폰, 선착순 500장 (할인율 50%) <br/>
+> •	쿠폰 C: 1천원 할인 쿠폰, 선착순 1000장 (할인율 10%) <br/>
+>
+> 유저는 선착순으로 쿠폰을 발급받을 수 있습니다. 중복 발급은 불가합니다.
+
+• 이 프로젝트의 핵심 아이디어만 구현하기 위해 다음과 같은 가정을 합니다.
+>1. MSA 아키텍처라고 가정합니다. 사용자 인증/인가 등의 추가 기능은 포함되지 않습니다.
+>2. 쿠폰의 정보는 미리 데이터베이스에 들어가 있다고 가정합니다.
+
+
+### 1-2. 문제 해결 전략
+
+치킨 이벤트의 특성을 파악해야 합니다.
+
+>1. 특정 시간부터 짧은 시간에 막대한 트래픽이 서버에 가해짐
+>2. 짧은 시간에 발생하는 쿠폰발급은 중복발급, 제한 수량 등 정확한 데이터가 요구됨
+
+이런 특성을 고려하여, 분산 시스템을 기반으로 한 대규모 백엔드 시스템을 구성하였습니다.
+
+1. 수 많은 트래픽을 감당하기 위해 수평적인 확장이 가능한 무상태 API 서버로 개발하였습니다. 또한 특정 시간에 무수한 트래픽이 몰리기 때문에, 오토 스케일링이 아닌 이벤트 시작 전에 많은 서버를 미리 올려 놓는 형태로 진행하였습니다. 이와 같은 상황에서 사용하게 될 수 많은 서버들을 관리하기 위해 k8s를 사용하였습니다.
+
+2. 이와 같은 대규모 트래픽에서는 동시성 문제가 발생하기 때문에 동시성 제어를 수행해야 합니다. 첫 번째 고려사항으로 데이터베이스의 낙관적락과 비관적락을 고려하였지만, 짧은 시간 안에 발생하는 수 많은 트랜잭션을 처리하기 위해 이보다 빠른 캐시를 사용하여 Lock을 거는 방식을 선택했고 분산 시스템에 맞춰 분산락을 사용하였습니다.
+이런 특성들을 고려하여 다음과 같은 기술을 적용하였습니다.
+
+이런 특성들을 고려하여 다음과 같은 기술을 적용하였습니다.
+
+1. 캐시를 이용한 Lock을 걸기 위해 Redis를 사용하였으며, 단일 Redis 객체에서 구현하는 분산락을 구현했을 때 더 좋은 성능을 보였지만 레디스 노드에 장애가 발생한다면 모든 서비스에서 레디스를 사용할 수 없게 되고 따라서 전체 프로그램의 장애로 연결되는 치명적인 에러가 발생할 수 있기 때문에 Redis의 여러 객체를 이용하는 Redlock을 사용하였습니다.
+
+### 1-3. 기술 스택
+
+• Language: `TypeScript` <br/>
+• Framework: `Nest.js` <br/>
+• Database: `MySQL` <br/>
+• Cache: `Redis`, `Redlock` <br/>
+• Infra: `Docker`, `Kubernetes (k8s)` <br/>
+• Test: `Jest`, `k6 (부하 테스트)` <br/>
+• Monitoring: `Prometheus`, `Grafana`
+
+## 2. 개발 결과물
+
+### 2-1. 데이터베이스 ERD
+<img src = "https://github.com/user-attachments/assets/9d9e9e24-41b8-4229-b5da-498fe4604752"/>
+
+1. Table: 쿠폰 정보를 가지고 있는 coupon 테이블과 발급 받은 사용자와 쿠폰에 대한 정보를 확인할 수 있는 coupon_wallet 테이블로 구성.
+2. UUID 사용: 쿠폰코드와 유저 ID는 추후 DB 및 캐시의 Replica를 고려해 중복을 방지하기 위해 UUID로 구성.
+
+<br/>
+
+### 2-2. 백엔드 아키텍처
+<img src = "https://github.com/user-attachments/assets/c32e1c8a-06d9-4dc0-860a-7c73eb2d9a45"/>
+
+k8s기반으로 아키텍처를 구성하였습니다. API 서버, 캐시, 데이터베이스 모두 컨테이너화되어 pod로 존재하도록 구성하였으며,
+
+각 pod들은 단일 Service에 연결하였습니다. 가장 앞단에서 트래픽을 받아낼 Coupon-Api-Service는
+
+Ingress에 연결하여 외부의 트래픽을 받을 수 있도록 하였습니다.
+
+특히, Redis를 이용한 분산락에서 Redlock 라이브러리의 특성 때문에 redis의 pod를 3개로 구성하였습니다.
+
+
+## 3. 성능 개선 과정
+
+다음과 같은 순서로 리팩토링하면서 성능을 개선하려고 했습니다.
+
+#### 가정 : 10000명의 가상 유저가 60초 동안 300개의 쿠폰을 발급받기 위해 트래픽을 부하할 때를 기준으로 진행
+
+<br/>
+
+### 3-1. 비관적 락 (TPS : 2316, MTT : 3.32s) - 단일 서버
+<img src = "https://github.com/user-attachments/assets/5ab2f81a-ebd5-4851-98de-0971a3da8744"/>
+<details>
+<summary>비관적 락 고찰</summary>
+
+> 이번 프로젝트에서 초기에 동시성 문제를 해결하기 위해 데이터베이스의 자체 락을 고려하였고  
+> 다수의 트래픽이 동시에 몰릴 것을 예상했기 때문에 낙관적락이 아닌 비관적락을 사용하기로 결정했습니다.
+> 
+> 결과적으로 동시성 제어를 성공적으로 수행했고, 쿠폰 300개가 정상적으로 발급되었습니다.     
+> 그러나 TPS가 2316, MTT가 3.32초로 성능이 다소 아쉬웠습니다.   
+> 이를 개선하기 위해, 더 빠른 캐시 기반 분산락을 도입하여 TPS와 MTT 성능을 최적화 하는 것을 목표로 하였습니다.
+</details>
+
+<br/>
+<br/>
+
+### 3-2. Redis를 이용한 분산락 (TPS : 1916, MTT : 2.26s) - 단일 서버
+
+<img src = "https://github.com/user-attachments/assets/6207d7e7-85ee-4f1c-b904-07ca0c5f1526"/>
+<details>
+<summary>분산락 고찰</summary>
+
+> Redis 기반 분산락을 사용한 결과를 모니터링한 이미지입니다.
+> 
+> 300개의 쿠폰이 정상적으로 발급된 것을 보아 동시성 제어가 성공적인 것을 확인할 수 있습니다.  
+> 비관적 락에 비해 MTT는 개선되었으나 TPS는 다소 감소한 것을 확인할 수 있습니다.<br/>
+> 저는 이 문제가 초기 Redis Lock 객체를 초기화할 때 Lock을 얻는 과정에서 불필요한 리소스 낭비가 발생했다고 생각하여 이를 개선하는 것을 목표로 하였습니다.
+</details>
+
+<br/>
+<br/>
+
+### 3-3. Redis 성능 개선 (TPS : 3300, MTT : 964.34ms) - 단일 서버
+<img src = "https://github.com/user-attachments/assets/c062c14e-8eb4-4b3e-9a83-b2f514eb1ce9"/>
+<details>
+<summary>분산락 성능개선</summary>
+
+> 마찬가지로 쿠폰 발급 300개로 정상적으로 동시서 제어가 성공한 것을 확인할 수 있습니다.<br/>
+> 저는 Redis의 Redlock을 사용했는데, 이는 여러 Redis 객체를 사용합니다.   
+> TPS가 낮아지는 원인은 락을 획득하는 과정에서 불필요한 리소스 낭비가 발생했기 때문이라고 판단하였고, Redis Lock 객체의 락을 획득하는 시간, 대기 시간을 조절하여 네트워크 오버헤드를 줄임으로써 성능을 개선했습니다.
+</details>
+
+### 3-4. k8s 리팩토링 - 진행중
+
+
+## 4. 기술적 성과
+
+### 4-1. 성능 개선 표
+
+<img src = "https://github.com/user-attachments/assets/8a56c732-61f7-493f-aea6-7ac128a852ac"/>
+
+### 4-2. 기술적 성과 요약
+
+• TPS 성능: 42.48% 증가
+
+• MTT 개선: 70.96% 감소
+
+• 동시성 제어: Redis Redlock을 통한 안정적 쿠폰 발급
+
+• 부하 테스트: 10,000명의 동시 접속에도 성능 유지 확인
+
+• 유닛 테스트 및 E2E 테스트 환경 구축 및 수행
+
+
+### 5. 개선 목표
+
+5-1. 백엔드 아키텍처
+
+더 많은 트래픽을 감당하는 분산 시스템을 구성하기 위해 Message Queue를 이용한 대기열 처리를 목표로 하고 있습니다.
+
+5-2. CPU 사용률 감소
+
+현재 Redis를 이용한 분산락을 사용할 시 CPU 사용률이 극적으로 증가하는 것을 확인하였는데, 이를 모니터링하여 개선하는 것을 목표로 하고 있습니다.
+
+5-3. Redis Cache 사용
+
+Redis를 이용하여 분산락을 사용하고 있지만 캐시를 사용하고 있지 않아서 DB에 부하가 예상되는 상황입니다.
+이를 Cache를 통해 데이터에 접근할 수 있도록 바꿔 성능을 개선하는 것을 목표로 하고 있습니다.
+
+## 5. 프로젝트 후기
+
+이번 프로젝트를 통해 동시성 제어와 대규모 트래픽 처리에 대한 깊은 이해를 얻을 수 있었습니다. 데이터베이스 락의 종류 뿐만 아니라 캐시를 이용한 분산락에 대해 학습하고, 실제로 적용해본 경험이 큰 도움이 되었습니다. 또한, 유닛 테스트 및 E2E 테스트를 통해 테스트 커버리지와 코드 품질을 향상시키는 방법을 고민할 수 있었습니다.
+
+또한 대규모 트래픽 처리 중 발생한 connection reset by peer 문제를 해결하기 위해 Wireshark를 사용해 패킷을 분석하였고, 이를 통해 3-way handshake와 운영체제의 시스템 호출에 대해 더 깊이 이해하게 되었습니다. 이를 통해 Node.js가 커널을 어떻게 활용하는지에 대해서도 고찰할 기회를 얻었습니다.
+
+<a href=https://matrix-o.tistory.com/19/>Connection reset by peer 트러블 슈팅과정
+
+<a href=https://matrix-o.tistory.com/20/>Connection reset by peer 고찰
